@@ -76,7 +76,7 @@ def validateOn() {
     if (state.currentPower > settings.onThreshold) {
         if (logEnable) log.info "verifyOn: Power is verified ON!"
     } else {
-        log.info "verifyOn: Power is still off! retries: ${state.retries}"
+        log.info "verifyOn: Power is still off! retries: ${state.retries} at: ${state.currentPower}"
         if(state.retries--) runIn(settings.retryDelay, on)
     }
 }
@@ -92,7 +92,7 @@ def verifyOff() {
     if (state.currentPower < settings.offThreshold) {
         if (logEnable) log.info "verifyOff: Power is OFF!"
     } else {
-        log.info "verifyOn: Power is still on! retries: ${state.retries}"
+        log.info "verifyOn: Power is still on! retries: ${state.retries} at: ${state.currentPower}"
         if(state.retries--) runIn(settings.retryDelay, off)
     }
 }
@@ -122,7 +122,7 @@ def on(tries = null) {
     if (!settings.onURI) {
         return;
     }
-    
+
     try {
         httpGet(settings.onURI) { resp ->
             if (logEnable && resp.data) log.debug "on(): resp.data: ${resp.data} success: ${resp.success}"
@@ -144,7 +144,7 @@ def off(tries = null) {
     if (!settings.offURI) {
         return;
     }
-    
+
     try {
         httpGet(settings.offURI) { resp ->
             if (logEnable && resp.data) log.debug "off: resp.data ${resp.data} success: ${resp.success}"

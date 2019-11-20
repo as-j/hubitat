@@ -42,7 +42,7 @@ def on() {
         sendEvent(name: "switch", value: "off", isStateChange: true)
         return;
     }
-    
+
     try {
         httpGet(settings.onURI) { resp ->
             if (resp.success) {
@@ -63,7 +63,7 @@ def off() {
         sendEvent(name: "switch", value: "off", isStateChange: true)
         return;
     }
-    
+
     try {
         httpGet(settings.offURI) { resp ->
             if (resp.success) {
