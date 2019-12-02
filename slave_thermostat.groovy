@@ -59,33 +59,57 @@ def updated() {
     if (logEnable) log.debug "${app.label}: updated ${settings}"
 
     unsubscribe()
-
+    
+    if (!state.masterTemp) state.masterTemp = masterThermostat.currentTemperature
+    if (!state.masterOperatingState) state.masterOperatingState = masterThermostat.currentThermostatOperatingState
+    if (!state.heatingSetPoint) state.heatingSetpoint = masterThermostat.currentHeatingSetpoint
+    if (!state.idleLastAt) state.idleLastAt = now()
+    
     // Turn on devices
     settings.slaveThermostat.each { device ->
         if (logEnable) log.debug "${app.label}: subscribe to swtich.on for $device"
         subscribe(device, "thermostatMode", slaveMode)
     }
     settings.masterThermostat.each { device ->
-        if (logEnable) log.debug "${app.label}: subscribe to temp for $device"
+        if (logEnable) log.debug "${app.label}: subscribe to temp for $device"                
         subscribe(device, "temperature", masterTemp)
+        subscribe(device, "thermostatOperatingState", masterOperatingState)
         subscribe(device, "heatingSetpoint", masterSetPoint)
     }
     setAirbnbMode()
 }
 
 def setAirbnbMode() {
-    if (state.masterTemp < state.masterSetPoint) {
-        log.info "setAirbnbMode: heat"
-        settings.slaveThermostat.heat()
+    if (state.masterOperatingState == "pending heat") {
+        state.heatingAt = state.heatingAt ?: now()
+        def heatingFor = (now() - state.heatingAt)/(60*1000)
+        def diffTemp = state.masterSetPoint - state.masterTemp
+        if ((heatingFor < 60) || (diffTemp >= 1)) {
+            log.info "setAirbnbMode: heat: heatingFor: $heatingFor diffTepmp: $diffTemp"
+            settings.slaveThermostat.heat()
+        } else {
+            log.info "setAirbnbMode: off (stuck upstairs)"
+            settings.slaveThermostat.off()
+        }
+        // Make sure we run now and then
+        runIn(3600, setAirbnbMode)
     } else {
-        log.info "setAirbnbMode: off"
+        log.info "setAirbnbMode: off (${state.masterOperatingState})"
         settings.slaveThermostat.off()
+        state.heatingAt = null
+        unschedule(setAirbnbMode)
     }
 }
 
 def masterTemp(evt) {
     if (logEnable) log.debug "masterTemp(): $evt.displayName($evt.name) $evt.value"
     state.masterTemp = evt.value
+    setAirbnbMode()
+}
+
+def masterOperatingState(evt) {
+    if (logEnable) log.debug "masterOperatingState(): $evt.displayName($evt.name) $evt.value"
+    state.masterOperatingState = evt.value
     setAirbnbMode()
 }
 
@@ -98,7 +122,7 @@ def masterSetPoint(evt) {
 def slaveMode(evt) {
     if (logEnable) log.debug "masterSetPoint(): $evt.displayName($evt.name) $evt.value"
     state.slaveMode = evt.value
-    setAirbnbMode()
+    runIn(60, setAirbnbMode)
 }
 
 
