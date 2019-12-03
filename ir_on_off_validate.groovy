@@ -122,18 +122,19 @@ def on(tries = null) {
     if (!settings.onURI) {
         return;
     }
-
+    
     try {
-        httpGet(settings.onURI) { resp ->
-            if (logEnable && resp.data) log.debug "on(): resp.data: ${resp.data} success: ${resp.success}"
-        }
+        def postParams = [
+            uri: settings.onURI,
+            timeout: 30]
+		asynchttpGet('handleHttpResponse', postParams, [start_time: now(), from: "on"])
     } catch (Exception e) {
         log.warn "on() Call to on failed: ${e.message}"
     }
     unschedule()
     state.currentPower = null
-    runIn((settings.retryDelay/2).toInteger(), refreshPower)
-    runIn(settings.retryDelay, validateOn)
+    runIn(settings.retryDelay, refreshPower)
+    runIn(settings.retryDelay+5, validateOn)
 }
 
 def off(tries = null) {
@@ -144,22 +145,28 @@ def off(tries = null) {
     if (!settings.offURI) {
         return;
     }
-
+    
     try {
-        httpGet(settings.offURI) { resp ->
-            if (logEnable && resp.data) log.debug "off: resp.data ${resp.data} success: ${resp.success}"
-        }
+        def postParams = [
+            uri: settings.offURI,
+            timeout: 30]
+		asynchttpGet('handleHttpResponse', postParams, [start_time: now(), from: "off"])
     } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
     }
     unschedule()
     state.currentPower = null
-    runIn((settings.retryDelay/2).toInteger(), refreshPower)
-    runIn(settings.retryDelay, verifyOff)
+    runIn(settings.retryDelay, refreshPower)
+    runIn(settings.retryDelay+5, verifyOff)
 
 
 }
 
+def handleHttpResponse(resp, data) {
+    //if (logEnable) log.debug("Executing handleHttpOnResponse: ${resp.properties}")
+    if (logEnable) log.debug "${data.from}(): resp.status: ${resp.status} took: ${now() - data.start_time}ms"
+    if (logEnable && resp?.json?.message) log.debug "${data.from}(): message: ${resp.json.message}"
+}
 
 
 
