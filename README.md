@@ -12,5 +12,6 @@ keep_on_when.groovy | Monitor switchs and power, and control another switch.  Wh
 ir_on_off_validate.groovy | Use a http IR controller to turn on/off a device, and monitor the devices power use to make sure the IR controller did it.  Try again 4 times if it fails.  Why? I like devices to be reliable, and since you can't confirm a device turned on/off via IR I use a power monitoring plug to validate it did what I wanted.  (I could also use the plug to turn power off/on and put the IR controlled device into a known state)
 did_it_charge.groovy | Monitor a devices energy consumptions and report each day if it ran and charged.  I use it to monitor if my Roomba's ran and/or got stuck somewhere.  They use about 0.03kWh each day, and they don't then they didn't  It's configurable per day, so if they don't run on weekends then it won't notify you on weekends.
 http_get_moded_driver.groovy | Normal http get driver, modded so if there's no offUri it still works.
+temp_limiter.groovy | Watch a temperature sensor, and when it reases a "caution" limit cycle it on/off every X many minutes, when it goes above a high level then turn it off.  I use this to monitor charging of a battery and keeping the levels within reason.
 
 
