@@ -1,5 +1,9 @@
+/*
+ * 19/12/10: Fixed app creating when no settings exists
+ */
+
 definition(
-    name: "Scheduled On/Off + Presense",
+    name: "Scheduled On/Off + Presence",
     namespace: "asj",
     author: "asj",
     description: "Turn On of Off at a Certain time, if someone is home",
@@ -88,6 +92,9 @@ def updated() {
 }
 
 def isTimeBetween() {
+    if (!settings.turnOnTime) return false
+    if (!settings.turnOffTime) return false
+    
     def onDate = toDateTime(settings.turnOnTime)
     def onHour = onDate.format("HH").toInteger()
     def onMinute = onDate.format("mm").toInteger()
